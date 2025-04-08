@@ -29,6 +29,7 @@ The MNIST Digit Classifier is a web-based application designed to recognize and 
 - **Streamlit**: An open-source app framework for Machine Learning and Data Science projects
 - **Docker**: A platform for developing, shipping, and running applications in containers
 - **PostgreSQL**: An open-source relational database management system
+- **CNN**: Convolutional Neural Network - a class of deep neural networks commonly used for image analysis
 
 ### 1.4 References
 
