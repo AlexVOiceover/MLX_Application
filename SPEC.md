@@ -3,14 +3,14 @@
 ## For MNIST Digit Classifier
 
 Version 0.1  
-Prepared by [Your Name]  
+Prepared by Alexander  
 Date: April 8, 2025
 
 ## Revision History
 
 | Name       | Date       | Reason for Changes | Version |
 |------------|------------|--------------------|---------|
-| [Your Name] | 08/04/2025 | Initial Draft      | 0.1     |
+| Alexander | 08/04/2025 | Initial Draft      | 0.1     |
 
 ## 1. Introduction
 
