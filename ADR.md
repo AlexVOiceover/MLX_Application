@@ -1,8 +1,5 @@
 # Architecture Decision Record: MNIST Digit Classifier
 
-## Status
-Accepted
-
 ## Context
 This project involves building, containerizing, and deploying a web application for handwritten digit recognition using a PyTorch model trained on the MNIST dataset. The system includes a Streamlit web app, a PostgreSQL database for logging predictions, and containerized deployment using Docker and Docker Compose. The goal is to keep the architecture simple, maintainable, and easy to deploy.
 
