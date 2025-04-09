@@ -2,16 +2,6 @@
 
 ## For MNIST Digit Classifier
 
-Version 0.1  
-Prepared by Alexander  
-Date: April 8, 2025
-
-## Revision History
-
-| Name       | Date       | Reason for Changes | Version |
-|------------|------------|--------------------|---------|
-| Alexander | 08/04/2025 | Initial Draft      | 0.1     |
-
 ## 1. Introduction
 
 ### 1.1 Document Purpose
@@ -73,11 +63,13 @@ This is a standalone application developed for educational purposes, focusing on
 
 - **Server**: Hetzner cloud server with Docker installed.
 - **Client**: Modern web browsers supporting HTML5 and JavaScript.
+- **Development**: Local development should be performed inside a Python virtual environment (e.g., created using `python -m venv venv`). All dependencies are managed via `requirements.txt`.
 
 ### 2.6 Design and Implementation Constraints
 
 - **Technologies**: The application must be developed using PyTorch for the model, Streamlit for the web interface, Docker for containerization, and PostgreSQL for data storage.
 - **Containerization**: All components should be containerized using Docker and orchestrated with a single `docker-compose.yml` file.
+- **Environment Setup**: Developers are expected to use a local Python virtual environment for dependency isolation. All packages should be pinned in `requirements.txt` and the virtual environment must be excluded from version control.
 
 ### 2.7 User Documentation
 
@@ -149,16 +141,3 @@ Comprehensive documentation will be provided, including setup instructions, usag
   - Database connection fails.
   - User submits form without providing the true label.
 
-<!-- ## 6. Testing Plan
-
-- **Unit Testing**:
-  - Model training pipeline
-  - Prediction function
-- **Integration Testing**:
-  - End-to-end test of prediction and logging
-- **Manual UI Testing**:
-  - Drawing input
-  - Display of predictions
-  - Validation of required fields
-- **Database Testing**:
-  - Validate that records are correctly inserted with each submission -->

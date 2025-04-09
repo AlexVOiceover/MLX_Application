@@ -7,7 +7,7 @@ This document outlines the development and operational standards for the MNIST D
 ## 1. Code Quality
 
 - **Formatting**: Use `black` (Python code formatter) and `isort` for import sorting.
-- **Linting**: Run `flake8` or `ruff` to catch syntax and style issues.
+- **Linting**: Run `flake8` catch syntax and style issues.
 - **Naming**: Follow PEP8 naming conventions:
   - Functions & variables: `snake_case`
   - Classes: `PascalCase`
@@ -79,10 +79,10 @@ project-root/
 
 ---
 
-## 8. Testing
-
+<!-- ## 8. Testing -->
+<!-- 
 - Where applicable, include basic tests for:
   - Image preprocessing (`utils.py`)
   - Database insertions (`db.py`)
   - Model prediction interface (`model.forward`)
-- Use `pytest` and store tests in a `/tests` directory.
+- Use `pytest` and store tests in a `/tests` directory. -->
