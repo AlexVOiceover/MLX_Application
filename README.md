@@ -39,7 +39,7 @@ All dependencies are pinned to specific versions in `requirements.txt` to ensure
 
 2. Create a virtual environment:
    ```bash
-   python -m venv venv
+   python3 -m venv venv
    ```
 
 3. Activate the virtual environment:

@@ -18,8 +18,9 @@ def load_mnist_data():
     pass
 
 
-class MNISTClassifier():
+class MNISTClassifier:
     """CNN model for MNIST digit classification."""
+
     # TODO: Implement model architecture
     pass
 

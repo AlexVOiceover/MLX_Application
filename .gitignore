@@ -176,6 +176,3 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
-
-# HULA_Docs
-HULA_Docs/
