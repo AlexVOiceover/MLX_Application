@@ -80,6 +80,24 @@ The application uses the following environment variables that should be defined 
 
 Make sure to configure these variables before running the application.
 
+#### Using Environment Variables in the Application
+
+The application uses the `load_environment_variables()` function from `utils.py` to load these variables:
+
+```python
+from utils import load_environment_variables
+
+# Load environment variables
+env_vars = load_environment_variables()
+
+# Access variables
+db_host = env_vars["db_host"]
+db_port = env_vars["db_port"]
+model_path = env_vars["model_path"]
+```
+
+This function returns a dictionary with snake_case keys containing all the environment variables with appropriate default values. It also handles type conversion (e.g., `db_port` is converted to an integer, and `debug` is converted to a boolean).
+
 ### Development Tools
 
 This project uses several development tools to ensure code quality:
