@@ -2,40 +2,40 @@
 
 # Variables
 PYTHON = python
-PIP = pip
-VENV = venv
-BIN = $(VENV)/bin
-STREAMLIT = $(BIN)/streamlit
+CONDA_ENV = mlx-app
+STREAMLIT = streamlit
 
 # Setup commands
 setup:
-	$(PIP) install -r requirements.txt
+	@echo "Creating conda environment and installing dependencies..."
+	conda env create -f environment.yml
 
-setup-dev: setup
-	$(PIP) install -r requirements-dev.txt
+update:
+	@echo "Updating conda environment..."
+	conda env update -f environment.yml
 
 # Code quality commands
 format:
-	$(BIN)/black .
-	$(BIN)/isort .
+	conda run -n $(CONDA_ENV) black .
+	conda run -n $(CONDA_ENV) isort .
 
 lint:
-	$(BIN)/flake8 .
+	conda run -n $(CONDA_ENV) flake8 .
 
 type-check:
-	$(BIN)/mypy app.py utils.py db.py train.py
+	conda run -n $(CONDA_ENV) mypy app.py utils.py db.py train.py
 
 # Testing command
 test:
-	$(BIN)/pytest
+	conda run -n $(CONDA_ENV) pytest
 
 # Application commands
 run:
-	$(STREAMLIT) run app.py
+	conda run -n $(CONDA_ENV) $(STREAMLIT) run app.py
 
 # Train model
 train:
-	$(PYTHON) train.py
+	conda run -n $(CONDA_ENV) $(PYTHON) train.py
 
 # Clean up command
 clean:
@@ -48,12 +48,12 @@ clean:
 # Help command
 help:
 	@echo "Available commands:"
-	@echo "  make setup      - Install production dependencies"
-	@echo "  make setup-dev  - Install development dependencies"
-	@echo "  make format     - Format code using black and isort"
-	@echo "  make lint       - Run linting checks with flake8"
+	@echo "  make setup     - Create conda environment and install dependencies"
+	@echo "  make update    - Update conda environment with newest dependencies"
+	@echo "  make format    - Format code using black and isort"
+	@echo "  make lint      - Run linting checks with flake8"
 	@echo "  make type-check - Run type checking with mypy"
-	@echo "  make test       - Run tests with pytest"
-	@echo "  make run        - Run the Streamlit application"
-	@echo "  make train      - Train the MNIST model"
-	@echo "  make clean      - Clean up cache files"
+	@echo "  make test      - Run tests with pytest"
+	@echo "  make run       - Run the Streamlit application"
+	@echo "  make train     - Train the MNIST model"
+	@echo "  make clean     - Clean up cache files"

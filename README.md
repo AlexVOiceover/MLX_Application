@@ -14,51 +14,36 @@ A web application for recognizing handwritten digits using a PyTorch model train
 
 ### Prerequisites
 
-- Python 3.10+
-- PostgreSQL 15
+- [Miniconda](https://docs.anaconda.com/free/miniconda/index.html) or [Anaconda](https://www.anaconda.com/download)
+- PostgreSQL 15 (automatically installed in the conda environment)
 
 ### Dependencies
 
 This project uses the following main dependencies:
-- **PyTorch (2.2.x)** and **torchvision (0.17.x)**: Deep learning framework for model training and inference
+- **PyTorch (2.6.x)** and **torchvision (0.21.x)**: Deep learning framework for model training and inference
 - **Streamlit (1.32.x)**: Web application framework for the user interface
 - **streamlit-drawable-canvas**: Component for drawing digits on the web interface
 - **psycopg2 (2.9.x)**: PostgreSQL adapter for database interactions
 - **Pillow (10.x)** and **NumPy (1.26.x)**: Image processing libraries
 - **python-dotenv (1.0.x)**: Environment variable management
 
-All dependencies are pinned to specific versions in `requirements.txt` to ensure reproducibility.
+All dependencies are managed through Conda using the `environment.yml` file.
 
 ### Installation
 
 1. Clone the repository:
    ```bash
    git clone <repository-url>
-   cd mnist-digit-classifier
+   cd MLX_Application
    ```
 
-2. Create a virtual environment:
+2. Create and activate the conda environment:
    ```bash
-   python3 -m venv venv
+   make setup
+   conda activate mlx-app
    ```
 
-3. Activate the virtual environment:
-   - On macOS/Linux:
-     ```bash
-     source venv/bin/activate
-     ```
-   - On Windows:
-     ```bash
-     .\venv\Scripts\activate
-     ```
-
-4. Install dependencies:
-   ```bash
-   make setup        # Install production dependencies
-   make setup-dev    # Install development dependencies
-   ```
-
-5. Configure the environment:
+3. Configure the environment:
    ```bash
    cp .env.example .env
    # Edit .env with your PostgreSQL credentials and application settings
@@ -95,8 +80,6 @@ db_host = env_vars["db_host"]
 db_port = env_vars["db_port"]
 model_path = env_vars["model_path"]
 ```
-
-This function returns a dictionary with snake_case keys containing all the environment variables with appropriate default values. It also handles type conversion (e.g., `db_port` is converted to an integer, and `debug` is converted to a boolean).
 
 ### Development Tools
 
@@ -148,6 +131,7 @@ This project uses several development tools to ensure code quality:
 - `db.py`: Database interactions
 - `train.py`: Model training script
 - `models/`: Directory for storing trained models
+- `environment.yml`: Conda environment configuration
 
 ## License
 
