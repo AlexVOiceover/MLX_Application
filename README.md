@@ -17,6 +17,18 @@ A web application for recognizing handwritten digits using a PyTorch model train
 - Python 3.10+
 - PostgreSQL 15
 
+### Dependencies
+
+This project uses the following main dependencies:
+- **PyTorch (2.2.x)** and **torchvision (0.17.x)**: Deep learning framework for model training and inference
+- **Streamlit (1.32.x)**: Web application framework for the user interface
+- **streamlit-drawable-canvas**: Component for drawing digits on the web interface
+- **psycopg2 (2.9.x)**: PostgreSQL adapter for database interactions
+- **Pillow (10.x)** and **NumPy (1.26.x)**: Image processing libraries
+- **python-dotenv (1.0.x)**: Environment variable management
+
+All dependencies are pinned to specific versions in `requirements.txt` to ensure reproducibility.
+
 ### Installation
 
 1. Clone the repository:
@@ -49,8 +61,24 @@ A web application for recognizing handwritten digits using a PyTorch model train
 5. Configure the environment:
    ```bash
    cp .env.example .env
-   # Edit .env with your PostgreSQL credentials
+   # Edit .env with your PostgreSQL credentials and application settings
    ```
+
+### Environment Variables
+
+The application uses the following environment variables that should be defined in the `.env` file:
+
+| Variable      | Description                      | Example Value            |
+|---------------|----------------------------------|--------------------------|
+| DB_HOST       | PostgreSQL server hostname       | localhost                |
+| DB_PORT       | PostgreSQL server port           | 5432                     |
+| DB_NAME       | PostgreSQL database name         | mnist_predictions        |
+| DB_USER       | PostgreSQL username              | postgres                 |
+| DB_PASSWORD   | PostgreSQL password              | your_password_here       |
+| MODEL_PATH    | Path to the trained model file   | models/model.pth         |
+| DEBUG         | Enable/disable debug mode        | False                    |
+
+Make sure to configure these variables before running the application.
 
 ### Development Tools
 
