@@ -1,17 +1,5 @@
 # Implementation Plan for MNIST Digit Classifier
 
-## For MNIST Digit Classifier
-
-Version 1.0  
-Prepared by Technical Project Planner  
-April 9, 2025
-
-## Revision History
-
-| Name                  | Date         | Reason For Changes | Version |
-|-----------------------|--------------|---------------------|---------|
-| Technical Project Planner | April 9, 2025 | Initial Draft      | 1.0     |
-
 ## Implementation Tracking
 
 ### Tracking Mechanism
@@ -46,7 +34,7 @@ April 9, 2025
 
 #### 1.1 Setup Project Structure
 
-**Task - Prompt:**
+**Prompt:**
 
 ```
 Create the initial project structure for an MNIST Digit Classifier application. This should include:
@@ -71,7 +59,7 @@ Return the commands needed to create this structure and the content of each file
 
 #### 1.2 Environment Setup
 
-**Task - Prompt:**
+**Prompt:**
 
 ```
 Set up the Python development environment using virtual environments to isolate dependencies:
@@ -100,7 +88,7 @@ Return the commands needed to perform this setup.
 
 #### 1.3 Development Tools Setup
 
-**Task - Prompt:**
+**Prompt:**
 
 ```
 Set up code quality and development tools for the MNIST Digit Classifier project. Specifically:
@@ -131,7 +119,7 @@ Return the content for all these files with proper configurations that match the
 
 #### 1.4 Setup Dependencies
 
-**Task - Prompt:**
+**Prompt:**
 
 ```
 Create a comprehensive requirements.txt file for the MNIST Digit Classifier project based on these specifications:
@@ -155,10 +143,9 @@ Create a comprehensive requirements.txt file for the MNIST Digit Classifier proj
 
 Return the content for both files.
 ```
-
 #### 1.5 Environment Configuration
 
-**Task - Prompt:**
+**Prompt:**
 
 ```
 Create environment configuration files for the MNIST Digit Classifier. Specifically:
@@ -174,14 +161,12 @@ Create environment configuration files for the MNIST Digit Classifier. Specifica
 
 Remember to follow the project standards, using snake_case for functions and including docstrings.
 ```
-
 ### 2. Model Development
 
 **Objective:** Create and train a PyTorch model on the MNIST dataset
-
 #### 2.1 Create Data Loading
 
-**Task - Prompt:**
+**Prompt:**
 
 ```
 Implement the MNIST dataset loading functionality in the `train.py` file. Specifically:
@@ -200,10 +185,9 @@ Implement the MNIST dataset loading functionality in the `train.py` file. Specif
 
 Follow PEP8 conventions and add type hints.
 ```
-
 #### 2.2 Create Model Architecture
 
-**Task - Prompt:**
+**Prompt:**
 
 ```
 Implement a CNN model architecture for MNIST digit classification in the `train.py` file. Specifically:
@@ -220,10 +204,9 @@ Implement a CNN model architecture for MNIST digit classification in the `train.
 
 Follow PyTorch best practices, PEP8 conventions, and add appropriate type hints.
 ```
-
 #### 2.3 Implement Training Loop
 
-**Task - Prompt:**
+**Prompt:**
 
 ```
 Implement the training loop for the MNIST model in the `train.py` file. Building on the previous code:
@@ -246,10 +229,9 @@ Implement the training loop for the MNIST model in the `train.py` file. Building
 
 Include progress reporting during training and proper error handling.
 ```
-
 #### 2.4 Add Model Loading Utility
 
-**Task - Prompt:**
+**Prompt:**
 
 ```
 Create a model loading utility in the `utils.py` file to allow the Streamlit app to load the trained model. Specifically:
@@ -269,14 +251,12 @@ Create a model loading utility in the `utils.py` file to allow the Streamlit app
 
 Follow PEP8 conventions and add type hints.
 ```
-
 ### 3. Database Framework
 
 **Objective:** Create database functionality for logging predictions
-
 #### 3.1 Database Connection
 
-**Task - Prompt:**
+**Prompt:**
 
 ```
 Implement the database connection functionality in the `db.py` file. Specifically:
@@ -296,10 +276,9 @@ Implement the database connection functionality in the `db.py` file. Specificall
 
 Follow PEP8 conventions and add type hints. Ensure the code handles connection errors gracefully.
 ```
-
 #### 3.2 Create Database Schema
 
-**Task - Prompt:**
+**Prompt:**
 
 ```
 Implement the database schema creation functionality in the `db.py` file. Building on the previous code:
@@ -321,10 +300,9 @@ Implement the database schema creation functionality in the `db.py` file. Buildi
 
 Follow PostgreSQL best practices for table design and indexing.
 ```
-
 #### 3.3 Implement Prediction Logging
 
-**Task - Prompt:**
+**Prompt:**
 
 ```
 Implement the prediction logging functionality in the `db.py` file. Building on the previous code:
@@ -343,10 +321,9 @@ Implement the prediction logging functionality in the `db.py` file. Building on 
 
 Follow database best practices for parameterized queries to prevent SQL injection.
 ```
-
 #### 3.4 Implement History Retrieval
 
-**Task - Prompt:**
+**Prompt:**
 
 ```
 Implement the prediction history retrieval functionality in the `db.py` file. Building on the previous code:
@@ -365,14 +342,12 @@ Implement the prediction history retrieval functionality in the `db.py` file. Bu
 
 Ensure the function returns results in a format that's easily consumable by Streamlit (e.g., can be passed directly to st.dataframe()).
 ```
-
 ### 4. Image Processing Utilities
 
 **Objective:** Create utility functions for processing drawn digits
-
 #### 4.1 Implement Image Preprocessing
 
-**Task - Prompt:**
+**Prompt:**
 
 ```
 Implement image preprocessing utilities in the `utils.py` file. Specifically:
@@ -398,10 +373,9 @@ Implement image preprocessing utilities in the `utils.py` file. Specifically:
 
 Follow PyTorch best practices for tensor manipulation and add type hints.
 ```
-
 #### 4.2 Implement Prediction Function
 
-**Task - Prompt:**
+**Prompt:**
 
 ```
 Implement a prediction function in the `utils.py` file that uses the model to predict digits. Building on the previous code:
@@ -421,14 +395,12 @@ Implement a prediction function in the `utils.py` file that uses the model to pr
 
 Follow PyTorch best practices for inference and add type hints.
 ```
-
 ### 5. Streamlit UI Development
 
 **Objective:** Create the user interface using Streamlit
-
 #### 5.1 Basic App Structure
 
-**Task - Prompt:**
+**Prompt:**
 
 ```
 Create the basic structure for the Streamlit app in `app.py`. Specifically:
@@ -451,10 +423,9 @@ Create the basic structure for the Streamlit app in `app.py`. Specifically:
 
 Follow Streamlit best practices and ensure the UI is user-friendly.
 ```
-
 #### 5.2 Drawing Canvas Implementation
 
-**Task - Prompt:**
+**Prompt:**
 
 ```
 Implement the drawing canvas in the Streamlit app. Building on the previous code in `app.py`:
@@ -474,10 +445,9 @@ Implement the drawing canvas in the Streamlit app. Building on the previous code
 
 Ensure the drawing experience is smooth and the canvas is properly configured for digit drawing (black background, white stroke).
 ```
-
 #### 5.3 Prediction Display
 
-**Task - Prompt:**
+**Prompt:**
 
 ```
 Implement the prediction display in the Streamlit app. Building on the previous code in `app.py`:
@@ -501,10 +471,9 @@ Implement the prediction display in the Streamlit app. Building on the previous 
 
 Follow Streamlit best practices for forms and buttons.
 ```
-
 #### 5.4 History Display Implementation
 
-**Task - Prompt:**
+**Prompt:**
 
 ```
 Implement the prediction history display in the Streamlit app. Building on the previous code in `app.py`:
@@ -522,10 +491,9 @@ Implement the prediction history display in the Streamlit app. Building on the p
 
 Follow Streamlit best practices for data display and ensure the table is sortable if possible.
 ```
-
 #### 5.5 Feedback Submission
 
-**Task - Prompt:**
+**Prompt:**
 
 ```
 Implement the feedback submission functionality in the Streamlit app. Building on the previous code in `app.py`:
@@ -545,14 +513,12 @@ Implement the feedback submission functionality in the Streamlit app. Building o
 
 Follow Streamlit best practices for form submission and user feedback.
 ```
-
 ### 6. Integration and Error Handling
 
 **Objective:** Connect all components and add robust error handling
-
 #### 6.1 Error Handling
 
-**Task - Prompt:**
+**Prompt:**
 
 ```
 Enhance error handling throughout the application. Specifically:
@@ -579,10 +545,9 @@ Enhance error handling throughout the application. Specifically:
 
 Make sure all errors are handled gracefully without crashing the application and that users receive helpful feedback.
 ```
-
 #### 6.2 Performance Optimization
 
-**Task - Prompt:**
+**Prompt:**
 
 ```
 Optimize the performance of the application. Specifically:
@@ -603,14 +568,12 @@ Optimize the performance of the application. Specifically:
 
 Document your optimizations with comments explaining the reasoning behind each change.
 ```
-
 ### 7. Containerization
 
 **Objective:** Containerize the application using Docker
-
 #### 7.1 Create Dockerfile
 
-**Task - Prompt:**
+**Prompt:**
 
 ```
 Create a Dockerfile for the MNIST Digit Classifier application. Specifically:
@@ -629,10 +592,9 @@ Create a Dockerfile for the MNIST Digit Classifier application. Specifically:
 
 Follow Docker best practices including multi-stage builds if appropriate and keeping the image size minimal.
 ```
-
 #### 7.2 Create Docker Compose File
 
-**Task - Prompt:**
+**Prompt:**
 
 ```
 Create a docker-compose.yml file to orchestrate the application and database. Specifically:
@@ -655,14 +617,12 @@ Create a docker-compose.yml file to orchestrate the application and database. Sp
 
 Follow Docker Compose best practices and ensure all necessary variables are properly set for both development and production use.
 ```
-
 ### 8. Testing and Documentation
 
 **Objective:** Add tests and complete project documentation
-
 #### 8.1 Create Tests
 
-**Task - Prompt:**
+**Prompt:**
 
 ```
 Create basic tests for the application components. Specifically:
@@ -687,10 +647,9 @@ Create basic tests for the application components. Specifically:
 
 Follow testing best practices, including using fixtures and mocking external dependencies where appropriate.
 ```
-
 #### 8.2 Complete Documentation
 
-**Task - Prompt:**
+**Prompt:**
 
 ```
 Complete the project documentation. Specifically:
@@ -720,14 +679,12 @@ Complete the project documentation. Specifically:
 
 Follow Markdown best practices and ensure all documentation is clear, accurate, and helpful.
 ```
-
 ### 9. Final Integration and Deployment
 
 **Objective:** Ensure all components work together seamlessly and prepare for deployment
-
 #### 9.1 Integration Testing
 
-**Task - Prompt:**
+**Prompt:**
 
 ```
 Create an end-to-end test script for the application. Specifically:
@@ -748,10 +705,9 @@ Create an end-to-end test script for the application. Specifically:
 
 Focus on testing integration points between components rather than detailed unit tests.
 ```
-
 #### 9.2 Deployment Instructions
 
-**Task - Prompt:**
+**Prompt:**
 
 ```
 Create detailed deployment instructions for the Hetzner server. Specifically:
@@ -775,10 +731,9 @@ Create detailed deployment instructions for the Hetzner server. Specifically:
 
 Make the instructions detailed enough for someone with basic server administration knowledge to follow.
 ```
-
 #### 9.3 Final Quality Check
 
-**Task - Prompt:**
+**Prompt:**
 
 ```
 Perform a final quality check of the entire codebase. Specifically:
@@ -799,7 +754,6 @@ Perform a final quality check of the entire codebase. Specifically:
 
 Document your findings and any final changes made to ensure code quality.
 ```
-
 ## Output Expectations
 
 - Fully functional MNIST Digit Classifier web application

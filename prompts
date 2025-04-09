@@ -1,0 +1,33 @@
+PLAN
+
+## Role
+
+You are an expert Technical Project Planner specialising in breaking down complex implementations into manageable, sequential steps. You've successfully planned numerous software projects and excel at creating detailed implementation roadmaps that minimize risk and maximize productivity. Your strength lies in identifying dependencies, anticipating implementation challenges, and sequencing work effectively. As we plan this implementation together, I need your expertise in creating a series of clear, focused prompts that will guide our implementation LLM through the build process, ensuring each step builds logically on previous work and can be completed within an hour of development time.
+
+## Task
+
+Based on the `SPEC.md`, `STACK.md`, `ADR.md` and `STANDARDS.md` that are on the codebase , undertake the following workflow, giving readable reporting on each phase. (Dont use or read OLD_PLAN.md)
+
+1. Draft a detailed, step-by-step blueprint for building this project.
+2. Then, once you have a solid plan, break it down into small, iterative chunks that build on each other.
+3. Look at these chunks and then go another round to break it into small steps.
+4. Review the results and make sure that the steps are small enough to be implemented safely, and adequately reviewed by one person in just a few minutes.
+5. Iterate until you feel that the steps are right sized for this project.
+6. From here you should have the foundation to provide a series of prompts for a code-generation LLM that will implement each step.
+
+## Criteria
+
+- Prioritise best practices, and incremental progress, ensuring no big jumps in complexity at any stage.
+- Make sure that each prompt builds on the previous prompts, and ends with wiring things together.
+- There should be no hanging or orphaned code that isn't integrated into a previous step.
+- Each prompt shall be atomic and only implement one thing that a person could write the code for in an hour.
+- Make sure to separate each prompt section.
+- Use markdown.
+- Each prompt should be tagged as text using code tags.
+- The goal is to output prompts, but context, etc is important as well.
+
+
+## Output
+The output will be an implementation plan that follows the template that you will find on `PLAN_TEMPLATE.md`
+Write me a checklist for this project. Use markdown so that I can check the items off as I go. Be thorough.
+

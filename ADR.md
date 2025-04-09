@@ -6,6 +6,12 @@ This project involves building, containerizing, and deploying a web application 
 ## Decision
 The system architecture will follow the principles of modularity and simplicity (KISS), structured as follows:
 
+### Environment Setup
+- Developers will use a Python virtual environment (`venv`) to manage dependencies locally during development.
+- All dependencies will be pinned in `requirements.txt`.
+- The virtual environment directory (`venv/`) will be excluded from version control via `.gitignore`.
+- This ensures consistency across environments and prevents dependency conflicts.
+
 ### Model Loading
 - The trained PyTorch model (`model.pth`) will be loaded **once** at the global scope when the Streamlit app starts.
 - This minimizes load time and system resources, avoiding repeated disk access.

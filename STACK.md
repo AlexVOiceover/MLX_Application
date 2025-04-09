@@ -1,44 +1,40 @@
 # Technology Stack: MNIST Digit Classifier
 
-## Overview
-This document outlines the full technology stack used in the MNIST Digit Classifier project, including tools, libraries, and specific version information. It ensures consistency across development, testing, and deployment environments.
-
----
-
-## 🔧 Programming Language
+## Programming Language
 - **Python**: 3.10+
 
-## 🧠 Machine Learning Framework
+## Machine Learning Framework
 - **PyTorch**: 2.2.x
 - **Torchvision**: 0.17.x
 
-## 🖼️ User Interface
+## User Interface
 - **Streamlit**: 1.32.x
 
-## 📦 Dependency Management
+## Dependency Management
 - **pip**: 23.x
 - **requirements.txt**: used to list all dependencies
+- **venv**: Python's built-in virtual environment tool is used to isolate dependencies during development
 
-## 🐘 Database
+## Database
 - **PostgreSQL**: 15
 - **psycopg2** (Python PostgreSQL adapter): 2.9.x
 
-## 🔄 Image Processing
+## Image Processing
 - **Pillow**: 10.x
 - **NumPy**: 1.26.x
 
-## 📂 Environment & Configuration
+## Environment & Configuration
 - **python-dotenv**: 1.0.x (for loading `.env` config files)
 
-## 🐳 Containerization & Deployment
+## Containerization & Deployment
 - **Docker**: 24.x
 - **Docker Compose**: 2.24.x
 - Target deployment server: **Hetzner Cloud VPS** (Ubuntu 22.04 LTS)
 
-## 🧪 Testing
-- **pytest**: 8.x (optional, for unit and integration testing)
+<!-- ## Testing
+- **pytest**: 8.x (optional, for unit and integration testing) -->
 
-## 🧰 Additional Tools
+## Additional Tools
 - **Git**: version control
 - **Make**: optional for task automation (e.g. `make up`, `make train`, etc.)
 
@@ -46,7 +42,7 @@ This document outlines the full technology stack used in the MNIST Digit Classif
 
 ## Notes
 - Versions listed are tested and known to work reliably with this setup.
-- Developers should use a Python virtual environment to isolate dependencies:
+- Developers must use a Python virtual environment to isolate dependencies:
   ```bash
   python -m venv venv
   source venv/bin/activate
