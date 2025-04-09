@@ -32,6 +32,10 @@ MANIFEST
 *.manifest
 *.spec
 
+# MNIST project specific
+models/*.pth
+models/*.pt
+
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
