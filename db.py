@@ -124,11 +124,21 @@ def log_prediction(predicted_digit: int, confidence: float, true_digit: Optional
 def get_prediction_history(limit: int = 100) -> List[Dict]:
     """Retrieve prediction history from the database.
     
+    This function retrieves the most recent prediction records from the database,
+    ordered by timestamp (newest first). The results are formatted as a list of
+    dictionaries that can be directly passed to Streamlit's st.dataframe().
+    
     Args:
-        limit: Maximum number of records to retrieve
+        limit: Maximum number of records to retrieve (default: 100)
     
     Returns:
-        List of dictionaries containing prediction records
+        List[Dict]: List of dictionaries containing prediction records with keys:
+            - id: Unique record identifier
+            - predicted_digit: The digit predicted by the model (0-9)
+            - confidence: The confidence score (0.0-1.0)
+            - true_digit: The user-provided correct digit (or None)
+            - timestamp: The time when the prediction was made
+            - accuracy: Whether the prediction matched the true digit (if provided)
     """
     conn = None
     results = []
@@ -138,18 +148,50 @@ def get_prediction_history(limit: int = 100) -> List[Dict]:
             cur.execute(
                 """
                 SELECT 
-                    id, predicted_digit, confidence, true_digit, 
-                    timestamp::text as timestamp
+                    id, 
+                    predicted_digit, 
+                    confidence, 
+                    true_digit, 
+                    timestamp::text as timestamp,
+                    CASE
+                        WHEN true_digit IS NULL THEN NULL
+                        WHEN predicted_digit = true_digit THEN true
+                        ELSE false
+                    END as accurate
                 FROM predictions 
                 ORDER BY timestamp DESC 
                 LIMIT %s
                 """,
                 (limit,)
             )
-            results = cur.fetchall()
+            
+            # Fetch all results
+            db_results = cur.fetchall()
+            
+            # Process results to ensure they're Streamlit-friendly
+            for row in db_results:
+                # Format confidence as percentage
+                row['confidence_pct'] = f"{row['confidence'] * 100:.1f}%"
+                
+                # Add a formatted timestamp for display
+                if 'timestamp' in row and row['timestamp']:
+                    try:
+                        # Extract just the date and time parts for cleaner display
+                        ts_parts = row['timestamp'].split('.')
+                        row['formatted_time'] = ts_parts[0].replace('T', ' ')
+                    except Exception:
+                        row['formatted_time'] = row['timestamp']
+                
+                results.append(row)
+        
+        print(f"Retrieved {len(results)} prediction records")
         return results
+        
     except Exception as e:
         print(f"Error retrieving prediction history: {e}")
+        if conn:
+            # Just in case we're in a transaction (though SELECT shouldn't be)
+            conn.rollback()
         return []
     finally:
         close_connection(conn)
@@ -186,13 +228,43 @@ if __name__ == "__main__":
         # Test retrieving prediction history
         print("\n4. Retrieving prediction history...")
         history = get_prediction_history(limit=5)
-        print(f"Retrieved {len(history)} records from prediction history")
+        
         if history:
+            print(f"\nRetrieved {len(history)} records from prediction history:")
             print("\nMost recent predictions:")
             for record in history:
-                feedback = f"(User said: {record['true_digit']})" if record['true_digit'] is not None else "(No feedback)"
-                print(f"  ID: {record['id']} | Predicted: {record['predicted_digit']} | "
-                      f"Confidence: {record['confidence']:.2f} | {feedback}")
+                # Determine accuracy status
+                if record['accurate'] is None:
+                    accuracy = "No feedback"
+                elif record['accurate']:
+                    accuracy = "✓ Correct"
+                else:
+                    accuracy = "✗ Incorrect"
+                
+                # Display feedback if available
+                feedback = f"(User said: {record['true_digit']})" if record['true_digit'] is not None else ""
+                
+                # Format and print the record in a readable way
+                print(f"  ID: {record['id']} | "
+                      f"Predicted: {record['predicted_digit']} | "
+                      f"Confidence: {record['confidence_pct']} | "
+                      f"Time: {record['formatted_time']} | "
+                      f"{accuracy} {feedback}")
+        else:
+            print("\nNo prediction records found in the database.")
+            print("Try running the test predictions first with:")
+            print("  python db.py")
+            
+        # Demonstrate Streamlit compatibility
+        print("\n5. Streamlit Compatibility Check:")
+        print("The following data structure can be directly passed to st.dataframe():")
+        if history:
+            print("  - Dictionary keys:", ', '.join(history[0].keys()))
+            print("  - Number of records:", len(history))
+            print("  - Example data types:", 
+                  f"id ({type(history[0]['id']).__name__}), ",
+                  f"confidence ({type(history[0]['confidence']).__name__}), ",
+                  f"timestamp ({type(history[0]['timestamp']).__name__})")
         
     except Exception as e:
         print(f"❌ An error occurred during testing: {e}")
