@@ -43,7 +43,22 @@ All dependencies are managed through Conda using the `environment.yml` file.
    conda activate mlx-app
    ```
 
-3. Configure the environment:
+3. Select the correct interpreter in your IDE/editor:
+   - **VS Code**:
+     - Press `Ctrl+Shift+P` (or `Cmd+Shift+P` on Mac)
+     - Type "Python: Select Interpreter"
+     - Select the interpreter from your conda environment (should show `Python 3.10.x ('mlx-app': conda)`)
+   - **PyCharm**:
+     - Go to `File > Settings > Project > Python Interpreter`
+     - Click the gear icon and select "Add..."
+     - Choose "Conda Environment" and select your existing environment
+   - **Command Line**:
+     - Verify the correct interpreter with `which python`
+     - It should point to a path in your conda environment
+
+   > **⚠️ Important**: Using the wrong interpreter will cause package import errors or 404 errors!
+
+4. Configure the environment:
    ```bash
    cp .env.example .env
    # Edit .env with your PostgreSQL credentials and application settings
@@ -132,6 +147,55 @@ This project uses several development tools to ensure code quality:
 - `train.py`: Model training script
 - `models/`: Directory for storing trained models
 - `environment.yml`: Conda environment configuration
+
+## Troubleshooting
+
+### Common Issues
+
+#### Package Import Errors or 404 Errors
+
+If you see errors like `ModuleNotFoundError` or HTTP 404 errors when installing packages:
+
+1. **Check your active environment**:
+   ```bash
+   # Should show (mlx-app)
+   conda info --envs
+   ```
+
+2. **Verify the interpreter**:
+   ```bash
+   # Should point to a path in your conda environment
+   which python
+   python --version
+   ```
+
+3. **Ensure you've selected the correct interpreter in your IDE/editor**:
+   - See the installation steps above for selecting the correct interpreter
+
+4. **Update the conda environment**:
+   ```bash
+   make update
+   ```
+
+#### Database Connection Issues
+
+If you encounter database connection errors:
+
+1. **Check your .env file**:
+   - Ensure DB_HOST, DB_PORT, DB_NAME, DB_USER, and DB_PASSWORD are set correctly
+
+2. **Verify PostgreSQL is running**:
+   ```bash
+   # On Linux
+   sudo systemctl status postgresql
+   # On macOS with Homebrew
+   brew services list
+   ```
+
+3. **Test the connection directly**:
+   ```bash
+   psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME
+   ```
 
 ## License
 
