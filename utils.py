@@ -378,18 +378,69 @@ def load_model(model_path: str = "models/model.pth") -> Optional[MNISTClassifier
         return None
 
 
-def predict_digit(model: MNISTClassifier, image_tensor: torch.Tensor) -> Tuple[int, float, list[float]]:
-    """Predict a digit using the trained model.
+def get_confidence_scores(output_tensor: torch.Tensor) -> list[float]:
+    """Convert model output logits to confidence scores using softmax.
     
     Args:
-        model: A trained MNISTClassifier model
+        output_tensor: The raw output tensor from the model's forward pass,
+            typically of shape (batch_size, num_classes)
+            
+    Returns:
+        A list of confidence scores (probabilities) for each digit class (0-9),
+        with values in the range [0.0, 1.0] that sum to 1.0
+        
+    Raises:
+        ValueError: If the input tensor is not of the expected shape
+    """
+    try:
+        if not isinstance(output_tensor, torch.Tensor):
+            raise ValueError("Input must be a PyTorch tensor")
+            
+        # Handle both batched and single example outputs
+        if output_tensor.dim() == 2:
+            # For batched output, we use the first example
+            if output_tensor.shape[0] > 1:
+                logger.warning(f"Received batch of {output_tensor.shape[0]} examples, using only the first one")
+            if output_tensor.shape[1] != 10:
+                raise ValueError(f"Expected 10 output classes, got {output_tensor.shape[1]}")
+            # Apply softmax along the class dimension
+            probabilities = F.softmax(output_tensor[0], dim=0)
+        elif output_tensor.dim() == 1:
+            # For single example with just class scores
+            if output_tensor.shape[0] != 10:
+                raise ValueError(f"Expected 10 output classes, got {output_tensor.shape[0]}")
+            # Apply softmax to the class scores
+            probabilities = F.softmax(output_tensor, dim=0)
+        else:
+            raise ValueError(f"Expected tensor of dim 1 or 2, got {output_tensor.dim()}")
+        
+        # Convert to list of float values
+        return probabilities.tolist()
+        
+    except Exception as e:
+        logger.error(f"Error calculating confidence scores: {str(e)}")
+        # Return a list of zeros with 1.0 at position 0 as a fallback
+        return [1.0 if i == 0 else 0.0 for i in range(10)]
+
+
+def predict_digit(model: MNISTClassifier, image_tensor: torch.Tensor) -> Tuple[int, float]:
+    """Predict a digit using the trained model.
+    
+    This function takes a preprocessed tensor representation of a digit image
+    and passes it through the model to predict which digit it represents.
+    
+    Args:
+        model: A trained MNISTClassifier model in evaluation mode
         image_tensor: A preprocessed image tensor of shape (1, 1, 28, 28)
         
     Returns:
         Tuple containing:
             - predicted digit (0-9)
             - confidence score (0.0-1.0) for the predicted digit
-            - list of confidence scores for all digits (0-9)
+            
+    Raises:
+        ValueError: If inputs don't match expected formats
+        RuntimeError: If prediction fails
     """
     try:
         if not isinstance(model, MNISTClassifier):
@@ -405,25 +456,60 @@ def predict_digit(model: MNISTClassifier, image_tensor: torch.Tensor) -> Tuple[i
         model.eval()
         
         # Make prediction
-        with torch.no_grad():
+        with torch.no_grad():  # Disable gradient computation for inference
             # Forward pass
             outputs = model(image_tensor)
             
-            # Convert to probabilities
-            probabilities = F.softmax(outputs, dim=1)[0]
+            # Get confidence scores
+            confidence_scores = get_confidence_scores(outputs)
             
-            # Get predicted class and confidence
-            predicted_class = torch.argmax(probabilities).item()
-            confidence = probabilities[predicted_class].item()
+            # Find the class with the highest confidence
+            predicted_class = confidence_scores.index(max(confidence_scores))
+            confidence = confidence_scores[predicted_class]
             
-            # Get all confidence scores
-            all_confidences = probabilities.tolist()
-            
-            return predicted_class, confidence, all_confidences
+            return predicted_class, confidence
             
     except Exception as e:
         logger.error(f"Error predicting digit: {str(e)}")
         raise RuntimeError(f"Prediction failed: {str(e)}")
+
+
+def predict_with_all_scores(model: MNISTClassifier, image_tensor: torch.Tensor) -> Tuple[int, float, list[float]]:
+    """Predict a digit and return all confidence scores.
+    
+    This is an enhanced version of predict_digit that also returns
+    confidence scores for all possible classes.
+    
+    Args:
+        model: A trained MNISTClassifier model
+        image_tensor: A preprocessed image tensor of shape (1, 1, 28, 28)
+        
+    Returns:
+        Tuple containing:
+            - predicted digit (0-9)
+            - confidence score (0.0-1.0) for the predicted digit
+            - list of confidence scores for all digits (0-9)
+    """
+    try:
+        # Ensure model is in evaluation mode
+        model.eval()
+        
+        with torch.no_grad():
+            # Forward pass
+            outputs = model(image_tensor)
+            
+            # Get confidence scores for all classes
+            all_confidences = get_confidence_scores(outputs)
+            
+            # Find the class with the highest confidence
+            predicted_class = all_confidences.index(max(all_confidences))
+            confidence = all_confidences[predicted_class]
+            
+            return predicted_class, confidence, all_confidences
+            
+    except Exception as e:
+        logger.error(f"Error in prediction with scores: {str(e)}")
+        raise RuntimeError(f"Prediction with scores failed: {str(e)}")
 
 
 def test_image_processing():
@@ -466,10 +552,14 @@ def test_image_processing():
         try:
             model = load_model()
             if model:
-                # Make a prediction
-                digit, confidence, all_confidences = predict_digit(model, tensor)
-                print(f"4. Prediction: digit={digit}, confidence={confidence:.4f}")
-                print(f"   All confidences: {[f'{i}: {conf:.4f}' for i, conf in enumerate(all_confidences)]}")
+                # Make predictions with both functions
+                digit, confidence = predict_digit(model, tensor)
+                print(f"4. Basic prediction: digit={digit}, confidence={confidence:.4f}")
+                
+                # Use the function that returns all scores
+                digit, confidence, all_confidences = predict_with_all_scores(model, tensor)
+                print(f"5. Detailed prediction: digit={digit}, confidence={confidence:.4f}")
+                print(f"   All confidence scores: {[f'{i}: {conf:.4f}' for i, conf in enumerate(all_confidences)]}")
             else:
                 print("4. Model not found, skipping prediction test")
         except Exception as e:
@@ -495,7 +585,11 @@ if __name__ == "__main__":
     print("\nTo use these utilities in your Streamlit app:")
     print("""
     # Example usage in Streamlit app
-    from utils import preprocess_image, convert_to_tensor, load_model, predict_digit
+    from utils import (
+        preprocess_image, convert_to_tensor, 
+        load_model, predict_digit, get_confidence_scores,
+        visualize_preprocessed_image
+    )
     
     # Get image data from Streamlit canvas
     image_data = st_canvas.image_data
@@ -503,15 +597,24 @@ if __name__ == "__main__":
     # Preprocess the image
     preprocessed = preprocess_image(image_data)
     
+    # Visualize preprocessed image (optional)
+    display_image = visualize_preprocessed_image(preprocessed)
+    st.image(display_image, caption="Preprocessed Image", width=150)
+    
     # Convert to tensor
     tensor = convert_to_tensor(preprocessed)
     
     # Load model
     model = load_model()
     
-    # Make prediction
-    digit, confidence, all_confidences = predict_digit(model, tensor)
+    # Make prediction (just the digit and its confidence)
+    digit, confidence = predict_digit(model, tensor)
     
     # Display result
     st.write(f"Predicted digit: {digit} (Confidence: {confidence:.2%})")
+    
+    # For advanced display, you can get all confidence scores
+    # _, _, all_scores = predict_with_all_scores(model, tensor)
+    # Create a bar chart of all confidence scores
+    # st.bar_chart({f"Digit {i}": score for i, score in enumerate(all_scores)})
     """)
