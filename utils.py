@@ -9,10 +9,22 @@ converting them to tensors, and making predictions using the PyTorch model.
 """
 
 # Import necessary libraries
+import logging
 import os
-from typing import Any, Dict
+from pathlib import Path
+from typing import Any, Dict, Optional, Union
 
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
 from dotenv import load_dotenv
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+logger = logging.getLogger(__name__)
 
 
 def load_environment_variables() -> Dict[str, Any]:
@@ -61,13 +73,127 @@ def load_environment_variables() -> Dict[str, Any]:
     }
 
 
+class MNISTClassifier(nn.Module):
+    """CNN model for MNIST digit classification.
+    
+    Architecture:
+        - Input: 1x28x28 grayscale images
+        - Conv Layer 1: 32 filters of size 3x3, ReLU activation
+        - Max Pooling: 2x2 with stride 2
+        - Conv Layer 2: 64 filters of size 3x3, ReLU activation
+        - Max Pooling: 2x2 with stride 2
+        - Fully Connected Layer: 10 units (one per digit class)
+    """
+
+    def __init__(self) -> None:
+        """Initialize the model architecture with all layers."""
+        super(MNISTClassifier, self).__init__()
+        
+        # First convolutional layer
+        self.conv1 = nn.Conv2d(1, 32, kernel_size=3, stride=1)
+        
+        # Second convolutional layer
+        self.conv2 = nn.Conv2d(32, 64, kernel_size=3, stride=1)
+        
+        # Max pooling layer (used for both conv layers)
+        self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
+        
+        # Fully connected output layer
+        # Input size calculation:
+        # Input image: 28x28
+        # After conv1 (3x3 kernel): 26x26
+        # After pool: 13x13
+        # After conv2 (3x3 kernel): 11x11
+        # After pool: 5x5
+        # With 64 channels: 64 * 5 * 5 = 1600
+        self.fc = nn.Linear(64 * 5 * 5, 10)
+        
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Forward pass through the network.
+        
+        Args:
+            x: Input tensor of shape (batch_size, 1, 28, 28)
+            
+        Returns:
+            torch.Tensor: Raw logits of shape (batch_size, 10)
+        """
+        # First conv layer + ReLU + pooling
+        x = self.pool(F.relu(self.conv1(x)))
+        
+        # Second conv layer + ReLU + pooling
+        x = self.pool(F.relu(self.conv2(x)))
+        
+        # Flatten the tensor for the fully connected layer
+        x = x.view(-1, 64 * 5 * 5)
+        
+        # Output layer (logits)
+        x = self.fc(x)
+        
+        return x
+
+
 def preprocess_image(image_data):
     """Preprocess image data from Streamlit canvas."""
     # TODO: Implement image preprocessing
     pass
 
 
-def load_model(model_path="models/model.pth"):
-    """Load the trained PyTorch model."""
-    # TODO: Implement model loading
-    pass
+def load_model(model_path: str = "models/model.pth") -> Optional[MNISTClassifier]:
+    """Load the trained PyTorch model.
+    
+    This function loads a trained MNISTClassifier model from a saved state dict file.
+    It handles cases where the model might be called from different working directories
+    by using absolute paths.
+    
+    Args:
+        model_path: Path to the saved model file. Defaults to "models/model.pth".
+        
+    Returns:
+        The loaded MNISTClassifier model in evaluation mode, or None if loading fails.
+        
+    Raises:
+        FileNotFoundError: If the model file doesn't exist and can't be found.
+    """
+    try:
+        # Convert to absolute path if it's a relative path
+        if not os.path.isabs(model_path):
+            # First try relative to current working directory
+            abs_path = os.path.join(os.getcwd(), model_path)
+            
+            # If that doesn't exist, try relative to this file's directory
+            if not os.path.exists(abs_path):
+                module_dir = os.path.dirname(os.path.abspath(__file__))
+                abs_path = os.path.join(module_dir, model_path)
+                
+                # If that still doesn't work, try one directory up (project root)
+                if not os.path.exists(abs_path):
+                    project_root = os.path.dirname(module_dir)
+                    abs_path = os.path.join(project_root, model_path)
+        else:
+            abs_path = model_path
+            
+        # Check if the model file exists
+        if not os.path.exists(abs_path):
+            raise FileNotFoundError(f"Model file not found at: {abs_path}")
+            
+        logger.info(f"Loading model from: {abs_path}")
+        
+        # Create a new instance of the model
+        model = MNISTClassifier()
+        
+        # Load the state dictionary
+        state_dict = torch.load(abs_path, map_location=torch.device('cpu'))
+        model.load_state_dict(state_dict)
+        
+        # Set the model to evaluation mode
+        model.eval()
+        
+        logger.info("Model loaded successfully")
+        return model
+        
+    except FileNotFoundError as e:
+        logger.error(f"Model file not found: {str(e)}")
+        raise
+    except Exception as e:
+        logger.error(f"Error loading model: {str(e)}")
+        return None
