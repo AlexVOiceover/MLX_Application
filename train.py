@@ -12,9 +12,11 @@ defining a CNN model architecture, and training the model.
 import logging
 import os
 from pathlib import Path
-from typing import Tuple, Dict, Any
+from typing import Tuple, Dict, Any, List
 
 import torch
+import torch.nn as nn
+import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
@@ -116,11 +118,63 @@ def load_mnist_data(
         raise RuntimeError(f"Failed to load MNIST dataset: {str(e)}")
 
 
-class MNISTClassifier:
-    """CNN model for MNIST digit classification."""
+class MNISTClassifier(nn.Module):
+    """CNN model for MNIST digit classification.
+    
+    Architecture:
+        - Input: 1x28x28 grayscale images
+        - Conv Layer 1: 32 filters of size 3x3, ReLU activation
+        - Max Pooling: 2x2 with stride 2
+        - Conv Layer 2: 64 filters of size 3x3, ReLU activation
+        - Max Pooling: 2x2 with stride 2
+        - Fully Connected Layer: 10 units (one per digit class)
+    """
 
-    # TODO: Implement model architecture
-    pass
+    def __init__(self) -> None:
+        """Initialize the model architecture with all layers."""
+        super(MNISTClassifier, self).__init__()
+        
+        # First convolutional layer
+        self.conv1 = nn.Conv2d(1, 32, kernel_size=3, stride=1)
+        
+        # Second convolutional layer
+        self.conv2 = nn.Conv2d(32, 64, kernel_size=3, stride=1)
+        
+        # Max pooling layer (used for both conv layers)
+        self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
+        
+        # Fully connected output layer
+        # Input size calculation:
+        # Input image: 28x28
+        # After conv1 (3x3 kernel): 26x26
+        # After pool: 13x13
+        # After conv2 (3x3 kernel): 11x11
+        # After pool: 5x5
+        # With 64 channels: 64 * 5 * 5 = 1600
+        self.fc = nn.Linear(64 * 5 * 5, 10)
+        
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Forward pass through the network.
+        
+        Args:
+            x: Input tensor of shape (batch_size, 1, 28, 28)
+            
+        Returns:
+            torch.Tensor: Raw logits of shape (batch_size, 10)
+        """
+        # First conv layer + ReLU + pooling
+        x = self.pool(F.relu(self.conv1(x)))
+        
+        # Second conv layer + ReLU + pooling
+        x = self.pool(F.relu(self.conv2(x)))
+        
+        # Flatten the tensor for the fully connected layer
+        x = x.view(-1, 64 * 5 * 5)
+        
+        # Output layer (logits)
+        x = self.fc(x)
+        
+        return x
 
 
 def train_model(model, train_loader, test_loader, epochs=10):
@@ -129,9 +183,38 @@ def train_model(model, train_loader, test_loader, epochs=10):
     pass
 
 
+def print_model_summary(model: nn.Module) -> None:
+    """Print a summary of the model architecture.
+    
+    Args:
+        model: PyTorch model to summarize
+    """
+    print("\nModel Architecture Summary:")
+    print("-" * 40)
+    
+    # Print model class name
+    print(f"Model Type: {model.__class__.__name__}")
+    
+    # Count and print the total number of parameters
+    total_params = sum(p.numel() for p in model.parameters())
+    
+    print(f"Total Parameters: {total_params:,}")
+    
+    # Print individual layers
+    print("\nLayers:")
+    for name, module in model.named_children():
+        print(f"  {name}: {module}")
+    
+    print("-" * 40)
+    
+    # Check if CUDA is available
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"Using device: {device}")
+
+
 if __name__ == "__main__":
-    # Demonstrate loading the MNIST dataset
     try:
+        # Demonstrate loading the MNIST dataset
         train_loader, test_loader, dataset_info = load_mnist_data()
         
         # Display dataset information
@@ -140,18 +223,24 @@ if __name__ == "__main__":
         print(f"Test samples: {dataset_info['test_size']}")
         print(f"Image shape: {dataset_info['image_shape']}")
         print(f"Number of classes: {dataset_info['classes']}")
-        print(f"Batch size: {dataset_info['batch_size']}")
-        print(f"Training batches: {dataset_info['num_batches_train']}")
-        print(f"Test batches: {dataset_info['num_batches_test']}")
         
         # Get a batch of data to show sample dimensions
         images, labels = next(iter(train_loader))
-        print(f"\nSample batch shape: {images.shape}")
-        print(f"Sample labels shape: {labels.shape}")
-        print(f"Sample labels: {labels[:10]}")
+        print(f"Sample batch shape: {images.shape}")
         
-        print("\nDataset loaded successfully!")
+        # Create model and display its architecture
+        model = MNISTClassifier()
+        print_model_summary(model)
+        
+        # Test a forward pass with sample data
+        with torch.no_grad():
+            output = model(images)
+            print(f"\nForward pass test:")
+            print(f"Input shape: {images.shape}")
+            print(f"Output shape: {output.shape}")
+        
+        print("\nModel initialized successfully!")
         
     except Exception as e:
-        logging.error(f"Error in dataset demonstration: {str(e)}")
+        logger.error(f"Error in demonstration: {str(e)}")
         print(f"An error occurred: {str(e)}")
