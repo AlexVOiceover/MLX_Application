@@ -12,12 +12,14 @@ converting them to tensors, and making predictions using the PyTorch model.
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional, Tuple, Union
 
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from dotenv import load_dotenv
+from PIL import Image
 
 # Configure logging
 logging.basicConfig(
@@ -132,10 +134,187 @@ class MNISTClassifier(nn.Module):
         return x
 
 
-def preprocess_image(image_data):
-    """Preprocess image data from Streamlit canvas."""
-    # TODO: Implement image preprocessing
-    pass
+def preprocess_image(image_data: np.ndarray) -> np.ndarray:
+    """Preprocess image data from Streamlit canvas for MNIST model.
+    
+    This function takes raw image data from a Streamlit drawable canvas,
+    which is typically an RGBA numpy array, and processes it to match
+    the format expected by the MNIST model:
+    - Resize to 28x28 pixels (MNIST standard)
+    - Convert to grayscale
+    - Normalize to [0, 1] range
+    - Invert colors if needed (MNIST uses white digits on black background)
+    
+    Args:
+        image_data: A numpy array containing image data from Streamlit canvas
+            Usually in RGBA format with shape (height, width, 4)
+    
+    Returns:
+        A preprocessed numpy array of shape (28, 28) with values in [0, 1] range,
+        where the digit is white (1.0) on a black (0.0) background
+        
+    Raises:
+        ValueError: If the input data is not a valid numpy array or is empty
+        RuntimeError: If image processing operations fail
+    """
+    try:
+        # Input validation
+        if not isinstance(image_data, np.ndarray):
+            raise ValueError("Input must be a numpy array")
+        
+        if image_data.size == 0:
+            raise ValueError("Input array is empty")
+            
+        logger.info(f"Input image shape: {image_data.shape}, dtype: {image_data.dtype}")
+        
+        # Convert RGBA to grayscale if needed
+        if len(image_data.shape) == 3 and image_data.shape[2] in [3, 4]:
+            # For RGBA/RGB images from canvas, the drawing is typically white on transparent
+            # We'll extract just the alpha channel if it exists (for transparency)
+            if image_data.shape[2] == 4:  # RGBA
+                # The alpha channel indicates where the user has drawn
+                gray_image = image_data[:, :, 3]
+            else:  # RGB
+                # Convert RGB to grayscale using standard luminance formula
+                gray_image = np.dot(image_data[..., :3], [0.2989, 0.5870, 0.1140])
+        else:
+            # Already grayscale
+            gray_image = image_data
+            
+        # Resize to 28x28 (MNIST standard size)
+        if gray_image.shape[0] != 28 or gray_image.shape[1] != 28:
+            # Use PIL for high-quality resizing
+            from PIL import Image
+            # Convert numpy array to PIL Image
+            pil_image = Image.fromarray(np.uint8(gray_image))
+            # Resize to 28x28 with antialiasing
+            pil_image = pil_image.resize((28, 28), Image.LANCZOS)
+            # Convert back to numpy array
+            gray_image = np.array(pil_image)
+            
+        # Normalize to [0, 1] range
+        if gray_image.max() > 1.0:
+            # Assuming values are in [0, 255] range
+            gray_image = gray_image / 255.0
+            
+        # The MNIST dataset has white digits (1.0) on black background (0.0)
+        # If our image is inverted (black digits on white), then invert it
+        # We'll check the average color of the background vs foreground
+        # If background is darker than foreground, we're already in MNIST format
+        # Otherwise, invert the colors
+        
+        # A simple threshold to determine foreground pixels
+        threshold = 0.3
+        foreground_mask = gray_image > threshold
+        
+        # If less than 20% of pixels are foreground (typical for digits),
+        # we check if we need to invert
+        if np.mean(foreground_mask) < 0.2:
+            # Calculate average of foreground and background
+            foreground_avg = np.mean(gray_image[foreground_mask]) if np.any(foreground_mask) else 0
+            background_avg = np.mean(gray_image[~foreground_mask]) if np.any(~foreground_mask) else 1
+            
+            # If background is lighter than foreground, invert the image
+            if background_avg > foreground_avg:
+                logger.info("Inverting image colors to match MNIST format")
+                gray_image = 1.0 - gray_image
+        
+        logger.info(f"Preprocessed image shape: {gray_image.shape}")
+        return gray_image
+        
+    except Exception as e:
+        logger.error(f"Error preprocessing image: {str(e)}")
+        raise RuntimeError(f"Image preprocessing failed: {str(e)}")
+
+
+def visualize_preprocessed_image(image_array: np.ndarray) -> np.ndarray:
+    """Create a visualization of the preprocessed image for display.
+    
+    This helper function converts the preprocessed image into a format
+    suitable for display using Streamlit's image display functions.
+    
+    Args:
+        image_array: A preprocessed numpy array of shape (28, 28) with values in [0, 1]
+        
+    Returns:
+        A numpy array of shape (28, 28, 3) in RGB format with values in [0, 255] range,
+        suitable for display with st.image()
+    """
+    try:
+        # Input validation
+        if not isinstance(image_array, np.ndarray):
+            raise ValueError("Input must be a numpy array")
+            
+        if image_array.ndim != 2:
+            raise ValueError(f"Expected 2D array, got shape {image_array.shape}")
+        
+        # Create a larger image for better visibility
+        from PIL import Image
+        
+        # Convert to 0-255 range
+        display_image = (image_array * 255).astype(np.uint8)
+        
+        # Convert to PIL for resizing
+        pil_image = Image.fromarray(display_image)
+        
+        # Create a visualization that shows the digit clearly
+        # Return as numpy array in RGB format for st.image
+        return np.array(pil_image.convert('RGB'))
+        
+    except Exception as e:
+        logger.error(f"Error creating visualization: {str(e)}")
+        # Return a simple gray image if visualization fails
+        return np.ones((28, 28, 3), dtype=np.uint8) * 128
+
+
+def convert_to_tensor(image_array: np.ndarray) -> torch.Tensor:
+    """Convert preprocessed numpy array to PyTorch tensor for model inference.
+    
+    This function takes a preprocessed grayscale image as a numpy array and
+    converts it to a PyTorch tensor with the correct dimensions and normalization
+    for the MNIST model.
+    
+    Args:
+        image_array: A preprocessed numpy array of shape (28, 28) with values in [0, 1]
+        
+    Returns:
+        A PyTorch tensor of shape (1, 1, 28, 28) with MNIST normalization applied,
+        ready for model inference. The dimensions are:
+        - 1: Batch size (single image)
+        - 1: Channels (grayscale)
+        - 28, 28: Image height and width
+        
+    Raises:
+        ValueError: If the input array doesn't have the expected shape or range
+    """
+    try:
+        # Input validation
+        if not isinstance(image_array, np.ndarray):
+            raise ValueError("Input must be a numpy array")
+            
+        if image_array.ndim != 2 or image_array.shape[0] != 28 or image_array.shape[1] != 28:
+            raise ValueError(f"Expected numpy array of shape (28, 28), got {image_array.shape}")
+            
+        if image_array.min() < 0 or image_array.max() > 1:
+            raise ValueError("Input array values must be in range [0, 1]")
+        
+        # Convert to tensor
+        tensor = torch.from_numpy(image_array.astype(np.float32))
+        
+        # Add batch and channel dimensions: (28, 28) -> (1, 1, 28, 28)
+        tensor = tensor.unsqueeze(0).unsqueeze(0)
+        
+        # Apply MNIST normalization (same as in training)
+        mean = 0.1307
+        std = 0.3081
+        tensor = (tensor - mean) / std
+        
+        logger.info(f"Converted tensor shape: {tensor.shape}")
+        return tensor
+        
+    except Exception as e:
+        logger.error(f"Error converting to tensor: {str(e)}")
+        raise RuntimeError(f"Tensor conversion failed: {str(e)}")
 
 
 def load_model(model_path: str = "models/model.pth") -> Optional[MNISTClassifier]:
@@ -197,3 +376,142 @@ def load_model(model_path: str = "models/model.pth") -> Optional[MNISTClassifier
     except Exception as e:
         logger.error(f"Error loading model: {str(e)}")
         return None
+
+
+def predict_digit(model: MNISTClassifier, image_tensor: torch.Tensor) -> Tuple[int, float, list[float]]:
+    """Predict a digit using the trained model.
+    
+    Args:
+        model: A trained MNISTClassifier model
+        image_tensor: A preprocessed image tensor of shape (1, 1, 28, 28)
+        
+    Returns:
+        Tuple containing:
+            - predicted digit (0-9)
+            - confidence score (0.0-1.0) for the predicted digit
+            - list of confidence scores for all digits (0-9)
+    """
+    try:
+        if not isinstance(model, MNISTClassifier):
+            raise ValueError("Model must be an instance of MNISTClassifier")
+            
+        if not isinstance(image_tensor, torch.Tensor):
+            raise ValueError("Image must be a PyTorch tensor")
+            
+        if image_tensor.dim() != 4 or image_tensor.shape[0] != 1 or image_tensor.shape[1] != 1:
+            raise ValueError(f"Expected tensor of shape (1, 1, height, width), got {image_tensor.shape}")
+        
+        # Ensure model is in evaluation mode
+        model.eval()
+        
+        # Make prediction
+        with torch.no_grad():
+            # Forward pass
+            outputs = model(image_tensor)
+            
+            # Convert to probabilities
+            probabilities = F.softmax(outputs, dim=1)[0]
+            
+            # Get predicted class and confidence
+            predicted_class = torch.argmax(probabilities).item()
+            confidence = probabilities[predicted_class].item()
+            
+            # Get all confidence scores
+            all_confidences = probabilities.tolist()
+            
+            return predicted_class, confidence, all_confidences
+            
+    except Exception as e:
+        logger.error(f"Error predicting digit: {str(e)}")
+        raise RuntimeError(f"Prediction failed: {str(e)}")
+
+
+def test_image_processing():
+    """Test the image preprocessing and tensor conversion functions.
+    
+    This function creates a simple test image with a digit, processes it
+    using the preprocessing functions, and displays the results.
+    
+    Returns:
+        Tuple of (preprocessed_image, tensor) for further testing
+    """
+    try:
+        # Create a simple test image (a white digit 5 on black background)
+        # This is just a simplified representation for testing
+        test_image = np.zeros((100, 100), dtype=np.uint8)
+        
+        # Draw a simple digit (e.g., number 5)
+        # Top horizontal line
+        test_image[20:30, 30:70] = 255
+        # Left vertical line (top)
+        test_image[30:50, 30:40] = 255
+        # Middle horizontal line
+        test_image[50:60, 30:70] = 255
+        # Right vertical line (bottom)
+        test_image[60:80, 60:70] = 255
+        # Bottom horizontal line
+        test_image[80:90, 30:60] = 255
+        
+        print("1. Created test image")
+        
+        # Preprocess the image
+        preprocessed = preprocess_image(test_image)
+        print(f"2. Preprocessed image shape: {preprocessed.shape}, min: {preprocessed.min()}, max: {preprocessed.max()}")
+        
+        # Convert to tensor
+        tensor = convert_to_tensor(preprocessed)
+        print(f"3. Tensor shape: {tensor.shape}, min: {tensor.min().item():.4f}, max: {tensor.max().item():.4f}")
+        
+        # Try to load the model
+        try:
+            model = load_model()
+            if model:
+                # Make a prediction
+                digit, confidence, all_confidences = predict_digit(model, tensor)
+                print(f"4. Prediction: digit={digit}, confidence={confidence:.4f}")
+                print(f"   All confidences: {[f'{i}: {conf:.4f}' for i, conf in enumerate(all_confidences)]}")
+            else:
+                print("4. Model not found, skipping prediction test")
+        except Exception as e:
+            print(f"4. Model loading or prediction failed: {e}")
+        
+        return preprocessed, tensor
+        
+    except Exception as e:
+        print(f"Error in test_image_processing: {e}")
+        return None, None
+
+
+if __name__ == "__main__":
+    # Test the image processing utilities
+    print("\n=== Testing Image Processing Utilities ===\n")
+    preprocessed, tensor = test_image_processing()
+    
+    if preprocessed is not None and tensor is not None:
+        print("\n=== Test Completed Successfully ===")
+    else:
+        print("\n=== Test Failed ===")
+        
+    print("\nTo use these utilities in your Streamlit app:")
+    print("""
+    # Example usage in Streamlit app
+    from utils import preprocess_image, convert_to_tensor, load_model, predict_digit
+    
+    # Get image data from Streamlit canvas
+    image_data = st_canvas.image_data
+    
+    # Preprocess the image
+    preprocessed = preprocess_image(image_data)
+    
+    # Convert to tensor
+    tensor = convert_to_tensor(preprocessed)
+    
+    # Load model
+    model = load_model()
+    
+    # Make prediction
+    digit, confidence, all_confidences = predict_digit(model, tensor)
+    
+    # Display result
+    st.write(f"Predicted digit: {digit} (Confidence: {confidence:.2%})")
+    """)
