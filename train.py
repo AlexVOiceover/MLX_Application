@@ -177,10 +177,144 @@ class MNISTClassifier(nn.Module):
         return x
 
 
-def train_model(model, train_loader, test_loader, epochs=10):
-    """Train the model on MNIST dataset."""
-    # TODO: Implement training loop
-    pass
+def train_model(
+    model: nn.Module,
+    train_loader: DataLoader,
+    test_loader: DataLoader,
+    epochs: int = 10,
+    learning_rate: float = 0.001,
+    model_save_path: str = "models/model.pth"
+) -> Tuple[nn.Module, Dict[str, List[float]]]:
+    """Train the model on MNIST dataset.
+    
+    Args:
+        model: The neural network model to train
+        train_loader: DataLoader for the training dataset
+        test_loader: DataLoader for the test dataset
+        epochs: Number of training epochs
+        learning_rate: Learning rate for the optimizer
+        model_save_path: Path to save the best model
+        
+    Returns:
+        Tuple containing:
+            - The trained model (best version based on validation accuracy)
+            - Dictionary with training history (loss and accuracy metrics)
+    """
+    logger.info("Starting model training...")
+    
+    # Create directory for saving the model if it doesn't exist
+    Path(os.path.dirname(model_save_path)).mkdir(parents=True, exist_ok=True)
+    
+    # Initialize device (GPU if available, otherwise CPU)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    logger.info(f"Using device: {device}")
+    
+    # Move model to device
+    model = model.to(device)
+    
+    # Initialize loss function and optimizer
+    criterion = nn.CrossEntropyLoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    
+    # Initialize tracking variables
+    history = {
+        "train_loss": [],
+        "train_acc": [],
+        "test_loss": [],
+        "test_acc": []
+    }
+    best_accuracy = 0.0
+    
+    # Training loop
+    for epoch in range(epochs):
+        # Set model to training mode
+        model.train()
+        train_loss = 0.0
+        train_correct = 0
+        train_total = 0
+        
+        # Training phase
+        for batch_idx, (images, labels) in enumerate(train_loader):
+            # Move data to device
+            images, labels = images.to(device), labels.to(device)
+            
+            # Zero the parameter gradients
+            optimizer.zero_grad()
+            
+            # Forward pass
+            outputs = model(images)
+            loss = criterion(outputs, labels)
+            
+            # Backward pass and optimize
+            loss.backward()
+            optimizer.step()
+            
+            # Update statistics
+            train_loss += loss.item()
+            _, predicted = torch.max(outputs.data, 1)
+            train_total += labels.size(0)
+            train_correct += (predicted == labels).sum().item()
+            
+            # Print batch progress
+            if (batch_idx + 1) % 100 == 0:
+                logger.info(f"Epoch [{epoch+1}/{epochs}], Batch [{batch_idx+1}/{len(train_loader)}], "
+                      f"Loss: {loss.item():.4f}")
+        
+        # Calculate average training loss and accuracy for this epoch
+        avg_train_loss = train_loss / len(train_loader)
+        train_accuracy = 100 * train_correct / train_total
+        
+        # Evaluation phase
+        model.eval()
+        test_loss = 0.0
+        test_correct = 0
+        test_total = 0
+        
+        with torch.no_grad():
+            for images, labels in test_loader:
+                images, labels = images.to(device), labels.to(device)
+                outputs = model(images)
+                loss = criterion(outputs, labels)
+                
+                test_loss += loss.item()
+                _, predicted = torch.max(outputs.data, 1)
+                test_total += labels.size(0)
+                test_correct += (predicted == labels).sum().item()
+                
+        # Calculate average test loss and accuracy
+        avg_test_loss = test_loss / len(test_loader)
+        test_accuracy = 100 * test_correct / test_total
+        
+        # Update history
+        history["train_loss"].append(avg_train_loss)
+        history["train_acc"].append(train_accuracy)
+        history["test_loss"].append(avg_test_loss)
+        history["test_acc"].append(test_accuracy)
+        
+        # Print epoch results
+        logger.info(f"Epoch [{epoch+1}/{epochs}], "
+              f"Train Loss: {avg_train_loss:.4f}, Train Acc: {train_accuracy:.2f}%, "
+              f"Test Loss: {avg_test_loss:.4f}, Test Acc: {test_accuracy:.2f}%")
+        
+        # Save the best model
+        if test_accuracy > best_accuracy:
+            best_accuracy = test_accuracy
+            try:
+                # Save model state dict
+                torch.save(model.state_dict(), model_save_path)
+                logger.info(f"Saved improved model with accuracy: {test_accuracy:.2f}%")
+            except Exception as e:
+                logger.error(f"Error saving model: {str(e)}")
+    
+    # Load the best model
+    try:
+        model.load_state_dict(torch.load(model_save_path))
+        logger.info(f"Loaded best model from {model_save_path}")
+    except Exception as e:
+        logger.error(f"Error loading best model: {str(e)}")
+    
+    logger.info("Training completed!")
+    return model, history
 
 
 def print_model_summary(model: nn.Module) -> None:
@@ -212,35 +346,107 @@ def print_model_summary(model: nn.Module) -> None:
     print(f"Using device: {device}")
 
 
+def plot_training_history(history: Dict[str, List[float]]) -> None:
+    """Plot the training and testing metrics.
+    
+    Args:
+        history: Dictionary containing training history metrics
+    """
+    try:
+        import matplotlib.pyplot as plt
+        
+        # Create figure with two subplots
+        plt.figure(figsize=(12, 5))
+        
+        # Plot loss
+        plt.subplot(1, 2, 1)
+        plt.plot(history['train_loss'], label='Train Loss')
+        plt.plot(history['test_loss'], label='Test Loss')
+        plt.xlabel('Epoch')
+        plt.ylabel('Loss')
+        plt.legend()
+        plt.title('Training and Test Loss')
+        plt.grid(True)
+        
+        # Plot accuracy
+        plt.subplot(1, 2, 2)
+        plt.plot(history['train_acc'], label='Train Accuracy')
+        plt.plot(history['test_acc'], label='Test Accuracy')
+        plt.xlabel('Epoch')
+        plt.ylabel('Accuracy (%)')
+        plt.legend()
+        plt.title('Training and Test Accuracy')
+        plt.grid(True)
+        
+        # Save the plot
+        plt.tight_layout()
+        Path('./models').mkdir(parents=True, exist_ok=True)
+        plt.savefig('./models/training_history.png')
+        logger.info("Training history plot saved to ./models/training_history.png")
+        
+    except ImportError:
+        logger.warning("Matplotlib not installed. Skipping plot generation.")
+    except Exception as e:
+        logger.error(f"Error creating training history plot: {str(e)}")
+
+
 if __name__ == "__main__":
     try:
-        # Demonstrate loading the MNIST dataset
+        # Load MNIST dataset
+        logger.info("Loading MNIST dataset...")
         train_loader, test_loader, dataset_info = load_mnist_data()
         
         # Display dataset information
-        print("\nMNIST Dataset Information:")
-        print(f"Training samples: {dataset_info['train_size']}")
-        print(f"Test samples: {dataset_info['test_size']}")
-        print(f"Image shape: {dataset_info['image_shape']}")
-        print(f"Number of classes: {dataset_info['classes']}")
+        logger.info("\nMNIST Dataset Information:")
+        logger.info(f"Training samples: {dataset_info['train_size']}")
+        logger.info(f"Test samples: {dataset_info['test_size']}")
+        logger.info(f"Image shape: {dataset_info['image_shape']}")
+        logger.info(f"Number of classes: {dataset_info['classes']}")
         
-        # Get a batch of data to show sample dimensions
-        images, labels = next(iter(train_loader))
-        print(f"Sample batch shape: {images.shape}")
-        
-        # Create model and display its architecture
+        # Create model
+        logger.info("Initializing model...")
         model = MNISTClassifier()
         print_model_summary(model)
         
-        # Test a forward pass with sample data
-        with torch.no_grad():
-            output = model(images)
-            print(f"\nForward pass test:")
-            print(f"Input shape: {images.shape}")
-            print(f"Output shape: {output.shape}")
+        # Set training parameters
+        num_epochs = 5
+        learning_rate = 0.001
+        model_save_path = "models/model.pth"
         
-        print("\nModel initialized successfully!")
+        # Train the model
+        logger.info(f"Starting training for {num_epochs} epochs...")
+        model, history = train_model(
+            model=model,
+            train_loader=train_loader,
+            test_loader=test_loader,
+            epochs=num_epochs,
+            learning_rate=learning_rate,
+            model_save_path=model_save_path
+        )
+        
+        # Plot training history
+        plot_training_history(history)
+        
+        # Final evaluation
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        model.to(device)
+        model.eval()
+        
+        correct = 0
+        total = 0
+        
+        with torch.no_grad():
+            for images, labels in test_loader:
+                images, labels = images.to(device), labels.to(device)
+                outputs = model(images)
+                _, predicted = torch.max(outputs.data, 1)
+                total += labels.size(0)
+                correct += (predicted == labels).sum().item()
+        
+        final_accuracy = 100 * correct / total
+        logger.info(f"\nFinal Model Accuracy: {final_accuracy:.2f}%")
+        logger.info(f"Model saved to: {model_save_path}")
         
     except Exception as e:
-        logger.error(f"Error in demonstration: {str(e)}")
+        logger.error(f"Error: {str(e)}")
         print(f"An error occurred: {str(e)}")
