@@ -35,6 +35,8 @@ MANIFEST
 # MNIST project specific
 models/*.pth
 models/*.pt
+data/
+models/
 
 # Installer logs
 pip-log.txt
